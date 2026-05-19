@@ -1,0 +1,37 @@
+{
+  "entities": {
+    "Order": {
+      "title": "Order",
+      "description": "A coffee drink order submitted by a customer.",
+      "type": "object",
+      "properties": {
+        "drinkName": { "type": "string", "description": "The name of the coffee drink." },
+        "customerName": { "type": "string", "description": "The name of the customer who ordered." },
+        "recipe": {
+          "type": "object",
+          "description": "The recipe details for the drink.",
+          "properties": {
+            "recipeName": { "type": "string" },
+            "description": { "type": "string" },
+            "flavorProfile": { "type": "string" },
+            "ingredients": { "type": "array", "items": { "type": "string" } },
+            "instructions": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "status": {
+          "type": "string",
+          "enum": ["submitted", "created"],
+          "description": "The current status of the order."
+        },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the order was placed." }
+      },
+      "required": ["drinkName", "customerName", "recipe", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Collection of coffee orders."
+    }
+  }
+}

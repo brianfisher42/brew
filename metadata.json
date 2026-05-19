@@ -1,0 +1,6 @@
+{
+  "name": "The Custom Cup",
+  "description": "An AI-powered application from The Custom Cup. Our AI barista, Brewtelligence, recommends and creates custom coffee drinks based on your mood, desired feelings, or a unique name you invent.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,46 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function isValidOrder(data) {
+      return data.keys().hasAll(['drinkName', 'customerName', 'recipe', 'status', 'createdAt']) &&
+             data.keys().size() == 5 &&
+             data.drinkName is string && data.drinkName.size() <= 200 &&
+             data.customerName is string && data.customerName.size() <= 100 &&
+             data.status in ['submitted', 'created'] &&
+             data.recipe is map &&
+             data.recipe.recipeName is string &&
+             data.createdAt is timestamp;
+    }
+
+    match /orders/{orderId} {
+      allow create: if isSignedIn() && isValidOrder(incoming()) && incoming().status == 'submitted';
+      allow list: if isSignedIn(); // In a real app, only barista might list, but we'll allow signed in users
+      allow get: if isSignedIn();
+      allow update: if isSignedIn() && (
+        // Only allow updating status from submitted to created
+        incoming().diff(resource.data).affectedKeys().hasOnly(['status']) &&
+        incoming().status == 'created' &&
+        resource.data.status == 'submitted'
+      );
+      allow delete: if false; // Orders should probably be archived instead of deleted
+    }
+  }
+}

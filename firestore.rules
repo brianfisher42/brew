@@ -1,0 +1,37 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidOrder(data) {
+      return data.keys().hasAll(['drinkName', 'customerName', 'recipe', 'status', 'createdAt']) &&
+             data.keys().size() == 5 &&
+             data.drinkName is string && data.drinkName.size() <= 200 &&
+             data.customerName is string && data.customerName.size() <= 100 &&
+             data.status in ['submitted', 'created'] &&
+             data.recipe is map &&
+             data.createdAt is timestamp;
+    }
+
+    match /orders/{orderId} {
+      allow create: if isValidId(orderId) && isValidOrder(request.resource.data) && request.resource.data.status == 'submitted' && request.resource.data.createdAt == request.time;
+      allow list: if true; 
+      allow get: if isValidId(orderId);
+      allow update: if isValidId(orderId) && isValidOrder(request.resource.data) && (
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']) &&
+        request.resource.data.status == 'created' &&
+        resource.data.status == 'submitted'
+      );
+    }
+  }
+}
